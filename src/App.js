@@ -118,17 +118,7 @@ function App() {
           <div style={{ marginTop: "25px", fontSize: "18px" }}>
             <p>🌡 Temperature: {weather.temperature}°C</p>
             <p>💨 Wind Speed: {weather.windspeed} km/h</p>
-            {/* Display IST time in readable format */}
-            <p>
-  ⏰ Time: {new Date(weather.time).toLocaleString("en-IN", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true,
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  })}
-</p>
+           
 
           </div>
         )}
