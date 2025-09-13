@@ -5,71 +5,101 @@ function App() {
   const [weather, setWeather] = useState(null);
   const [error, setError] = useState("");
 
-  const fetchWeather = async () => {
-    setError("");
-    setWeather(null);
-
+  const getWeather = async () => {
+    if (!city) {
+      setError("⚠️ Please enter a city name!");
+      setWeather(null);
+      return;
+    }
     try {
-      // Step 1: Get lat/lon from city
+      setError("");
       const geoRes = await fetch(
-        `https://geocoding-api.open-meteo.com/v1/search?name=${city}`
+        `https://nominatim.openstreetmap.org/search?city=${city}&format=json&limit=1`
       );
       const geoData = await geoRes.json();
 
-      if (!geoData.results || geoData.results.length === 0) {
+      if (geoData.length === 0) {
         setError("❌ City not found!");
+        setWeather(null);
         return;
       }
 
-      const { latitude, longitude, name, country } = geoData.results[0];
+      const lat = geoData[0].lat;
+      const lon = geoData[0].lon;
 
-      // Step 2: Get weather data
       const weatherRes = await fetch(
-        `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`
+        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`
       );
       const weatherData = await weatherRes.json();
 
-      setWeather({
-        location: `${name}, ${country}`,
-        temperature: weatherData.current_weather.temperature,
-        wind: weatherData.current_weather.windspeed,
-        condition: weatherData.current_weather.weathercode,
-      });
-    } catch (err) {
-      setError("⚠️ Something went wrong. Please try again!");
+      setWeather(weatherData.current_weather);
+    } catch {
+      setError("⚠️ Error fetching weather!");
+      setWeather(null);
     }
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-blue-400 to-indigo-600 p-6">
-      <h1 className="text-4xl font-bold text-white mb-8">🌤 Weather Now</h1>
-
-      <div className="flex gap-2 mb-6">
+    <div style={{
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      minHeight: "100vh",
+      background: "linear-gradient(to top, #a1c4fd, #c2e9fb)",
+      fontFamily: "Arial, sans-serif",
+      padding: "20px"
+    }}>
+      <div style={{
+        background: "white",
+        borderRadius: "20px",
+        padding: "30px",
+        width: "350px",
+        textAlign: "center",
+        boxShadow: "0 10px 25px rgba(0,0,0,0.15)"
+      }}>
+        <h1 style={{ fontSize: "28px", marginBottom: "20px" }}>🌤 Weather Now</h1>
         <input
           type="text"
-          placeholder="Enter city..."
+          placeholder="Enter city name"
           value={city}
           onChange={(e) => setCity(e.target.value)}
-          className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          style={{
+            width: "80%",
+            padding: "10px",
+            borderRadius: "10px",
+            border: "1px solid #ccc",
+            marginBottom: "15px"
+          }}
         />
         <button
-          onClick={fetchWeather}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+          onClick={getWeather}
+          style={{
+            width: "50%",
+            padding: "10px",
+            borderRadius: "10px",
+            border: "none",
+            background: "#4f46e5",
+            color: "white",
+            fontWeight: "bold",
+            cursor: "pointer",
+            transition: "0.3s"
+          }}
+          onMouseOver={e => e.target.style.background="#4338ca"}
+          onMouseOut={e => e.target.style.background="#4f46e5"}
         >
-          Search
+          Get Weather
         </button>
+
+        {error && <p style={{ color: "red", marginTop: "15px" }}>{error}</p>}
+
+        {weather && (
+          <div style={{ marginTop: "25px", fontSize: "18px" }}>
+            <p>🌡 Temperature: {weather.temperature}°C</p>
+            <p>💨 Wind Speed: {weather.windspeed} km/h</p>
+            <p>⏰ Time: {weather.time}</p>
+          </div>
+        )}
       </div>
-
-      {error && <p className="text-red-200 font-medium">{error}</p>}
-
-      {weather && (
-        <div className="bg-white shadow-xl rounded-xl p-6 w-72 text-center">
-          <h2 className="text-xl font-semibold mb-2">{weather.location}</h2>
-          <p className="text-3xl font-bold text-blue-600">{weather.temperature}°C</p>
-          <p className="mt-2">💨 {weather.wind} km/h</p>
-          <p className="text-gray-600">Weather code: {weather.condition}</p>
-        </div>
-      )}
     </div>
   );
 }
